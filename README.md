@@ -1,5 +1,5 @@
 
-# 🚗 **Smart-Plate**: Revolutionizing License Plate Recognition 🚦
+# 🚗 **Smart-Plate**: Revolutionizing Recognition 🚦
 
 Welcome to **Smart-Plate**, an advanced AI-powered license plate recognition system. Designed for real-time vehicle tracking, Smart-Plate accurately captures and processes license plate data to streamline applications such as automated toll collection, traffic monitoring, and enhanced security.
 
