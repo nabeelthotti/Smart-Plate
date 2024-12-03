@@ -1,0 +1,51 @@
+# Python
+*.pyc
+__pycache__/
+
+# Virtual Environment
+venv/
+.env
+
+# Logs and local database
+*.log
+*.sqlite3
+
+# Byte-compiled / optimized / DLL files
+*.py[cod]
+*.pyo
+
+# Packages
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+wheels/
+*.manifest
+*.spec
+
+# IDE files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Test coverage reports
+.coverage
+.tox/
+.nox/
+.cache
+coverage.xml
+
+# Flask
+instance/
+*.db
+
+# Environment
+.env
+.env.*
+
+# Local debug configurations
+*.launch.json
