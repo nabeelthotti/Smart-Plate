@@ -1,44 +1,65 @@
-from flask import request, jsonify
+from flask import Blueprint, request, jsonify, session
 from pymongo import MongoClient
 from datetime import datetime
-from . import api_bp
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
+mongo_uri = os.getenv("MONGO_URI")
 
 # MongoDB connection
 try:
-    client = MongoClient("mongodb+srv://nabeel:nhT040702@smart-plate.yripg.mongodb.net/smartplate?retryWrites=true&w=majority")
+    client = MongoClient(mongo_uri)
     db = client["smartplate"]
     users_collection = db["users"]
 except Exception as e:
     print(f"Error connecting to MongoDB: {e}")
     exit(1)
 
-@api_bp.route("/signup", methods=["POST"])
+# Create Blueprint
+auth_bp = Blueprint("auth_api", __name__)
+
+### **1️⃣ User Signup (Register & Auto-Login)**
+@auth_bp.route("/signup", methods=["POST"])
 def signup():
     data = request.get_json()
     if not data:
         return jsonify({"status": "fail", "message": "Invalid JSON payload"}), 400
 
+    name = data.get("name")
     username = data.get("username")
+    email = data.get("email")
+    phone = data.get("phone")
+    address = data.get("address")
     password = data.get("password")
 
     # Validate input
-    if not username or not password:
-        return jsonify({"status": "fail", "message": "Username and password are required"}), 400
+    if not all([name, username, email, phone, address, password]):
+        return jsonify({"status": "fail", "message": "All fields are required"}), 400
 
     # Check if username already exists
     if users_collection.find_one({"username": username}):
         return jsonify({"status": "fail", "message": "Username already exists"}), 400
 
-    # Store plain text password
+    # Insert new user into database
     users_collection.insert_one({
+        "name": name,
         "username": username,
-        "password": password,  # Store plain text password
+        "email": email,
+        "phone": phone,
+        "address": address,
+        "password": password,  # 🔴 Consider hashing this for security
         "created_at": datetime.utcnow(),
     })
 
-    return jsonify({"status": "success", "message": "User created successfully"}), 201
+    # Auto-login the user after signup
+    session["username"] = username
 
-@api_bp.route("/login", methods=["POST"])
+    return jsonify({"status": "success", "message": "User created and logged in successfully"}), 201
+
+### **2️⃣ User Login (Store Session)**
+@auth_bp.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     if not data:
@@ -54,4 +75,47 @@ def login():
     if not user:
         return jsonify({"status": "fail", "message": "Invalid credentials"}), 401
 
+    # Store session
+    session["username"] = username
+
     return jsonify({"status": "success", "message": "Login successful"}), 200
+
+### **3️⃣ Get Logged-in User Profile**
+@auth_bp.route("/user-profile", methods=["GET"])
+def get_user_profile():
+    if "username" not in session:
+        return jsonify({"status": "fail", "message": "Unauthorized"}), 401
+
+    username = session["username"]
+    user = users_collection.find_one({"username": username}, {"_id": 0, "password": 0})  # Exclude password
+    if not user:
+        return jsonify({"status": "fail", "message": "User not found"}), 404
+
+    return jsonify({"status": "success", "user": user}), 200
+
+### **4️⃣ Update User Profile**
+@auth_bp.route("/update-profile", methods=["PUT"])
+def update_user_profile():
+    if "username" not in session:
+        return jsonify({"status": "fail", "message": "Unauthorized"}), 401
+
+    username = session["username"]
+    data = request.get_json()
+
+    update_data = {}
+    for field in ["name", "email", "phone", "address", "password"]:
+        if field in data:
+            update_data[field] = data[field]
+
+    if not update_data:
+        return jsonify({"status": "fail", "message": "No valid fields to update"}), 400
+
+    users_collection.update_one({"username": username}, {"$set": update_data})
+
+    return jsonify({"status": "success", "message": "Profile updated successfully"}), 200
+
+### **5️⃣ Logout (Clear Session)**
+@auth_bp.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"status": "success", "message": "Logged out successfully"}), 200

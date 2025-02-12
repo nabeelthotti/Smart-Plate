@@ -15,7 +15,6 @@ db = client["smartplate"]
 
 db.license_plates.delete_many({})
 
-# Populate dummy data
 plates = ["ABC123", "DEF456", "GHI789", "JKL012", "MNO345"]
 statuses = ["entered", "exited"]
 

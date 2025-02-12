@@ -1,177 +1,278 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SmartPlate Login</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #2F3A4C;
-            color: white;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            background-color: #394A5E;
-            padding: 40px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
-            width: 100%;
-            max-width: 400px;
-            animation: fadeIn 1s ease;
-        }
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        .logo {
-            margin-bottom: 30px;
-        }
-        .logo img {
-            max-width: 150px;
-            height: auto;
-        }
-        h1 {
-            font-size: 28px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #FFFFFF;
-        }
-        p {
-            font-size: 16px;
-            color: #CFCFCF;
-            margin-bottom: 30px;
-        }
-        .input-field {
-            display: block;
-            width: 100%;
-            margin: 15px 0;
-            padding: 15px;
-            font-size: 16px;
-            border: none;
-            border-radius: 8px;
-            background-color: #4A5A6E;
-            color: white;
-        }
-        .input-field::placeholder {
-            color: #B8C0CB;
-        }
-        .btn {
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 12px;
-            font-size: 18px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 15px;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-        }
-        .btn:hover {
-            background-color: #0056b3;
-            transform: scale(1.03);
-        }
-        .switch {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #A0A0A0;
-            cursor: pointer;
-            text-decoration: underline;
-            transition: color 0.3s ease;
-        }
-        .switch:hover {
-            color: #FFFFFF;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartPlate Login</title>
+  <style>
+    /* Apply box-sizing globally */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #2F3A4C;
+      color: white;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background-color: #394A5E;
+      padding: 40px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      width: 100%;
+      max-width: 400px;
+      animation: fadeIn 1s ease;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .logo {
+      margin-bottom: 30px;
+    }
+    .logo img {
+      max-width: 150px;
+      height: auto;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #FFFFFF;
+    }
+    p {
+      font-size: 16px;
+      color: #CFCFCF;
+      margin-bottom: 30px;
+    }
+    /* Input fields styling */
+    .input-field {
+      display: block;
+      width: 100%;
+      margin: 10px auto;
+      padding: 12px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4A5A6E;
+      color: white;
+    }
+    .input-field::placeholder {
+      color: #B8C0CB;
+    }
+    .btn {
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 18px;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 15px;
+      transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+      transform: scale(1.03);
+    }
+    .switch {
+      margin-top: 20px;
+      font-size: 14px;
+      color: #A0A0A0;
+      cursor: pointer;
+      text-decoration: underline;
+      transition: color 0.3s ease;
+    }
+    .switch:hover {
+      color: #FFFFFF;
+    }
+    .signup-fields {
+      display: none;
+    }
+    /* Dropdown header styling matching input fields, with a non-white text color */
+    .dropdown-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      cursor: pointer;
+      padding: 12px;
+      background-color: #4A5A6E;
+      border-radius: 8px;
+      margin: 10px auto;
+      width: 100%;
+      color: #B8C0CB; /* Changed from white to match the rest */
+    }
+    .dropdown-header .arrow {
+      transition: transform 0.3s ease;
+    }
+    .dropdown-header.expanded .arrow {
+      transform: rotate(180deg);
+    }
+    .dropdown-content {
+      display: none;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SmartPlate Logo">
-        </div>
-        <h1 id="title">Welcome to SmartPlate</h1>
-        <p id="description">Login to access your vehicle database</p>
-        <form id="authForm">
-            <input type="text" id="username" class="input-field" placeholder="Username" required />
-            <input type="password" id="password" class="input-field" placeholder="Password" required />
-            <button type="submit" class="btn" id="authButton">Login</button>
-        </form>
-        <p class="switch" id="switchMode">Don't have an account? Sign Up</p>
+  <div class="container">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="SmartPlate Logo">
     </div>
+    <h1 id="title">Welcome to SmartPlate</h1>
+    <p id="description">Login to access your vehicle database</p>
+    <form id="authForm">
+      <!-- Sign-Up Fields -->
+      <div id="signupFields" class="signup-fields">
+        <input type="text" id="name" class="input-field" placeholder="Full Name" />
+        <input type="email" id="email" class="input-field" placeholder="Email" />
+        <input type="text" id="phone" class="input-field" placeholder="Phone" />
+        <!-- Dropdown for Detailed Address -->
+        <div id="addressDropdown" class="dropdown-header">
+          <span>Address</span>
+          <span id="addressArrow" class="arrow">&#9660;</span>
+        </div>
+        <div id="detailedAddress" class="dropdown-content">
+          <input type="text" id="street" class="input-field" placeholder="Street" />
+          <input type="text" id="city" class="input-field" placeholder="City" />
+          <input type="text" id="state" class="input-field" placeholder="State" />
+          <input type="text" id="zip" class="input-field" placeholder="Zip Code" />
+        </div>
+      </div>
+      <!-- Fields common to both Login and Sign-Up -->
+      <input type="text" id="username" class="input-field" placeholder="Username" required />
+      <input type="password" id="password" class="input-field" placeholder="Password" required />
+      <button type="submit" class="btn" id="authButton">Login</button>
+    </form>
+    <p class="switch" id="switchMode">Don't have an account? Sign Up</p>
+  </div>
 
-    <script>
-        const title = document.getElementById("title");
-        const description = document.getElementById("description");
-        const authButton = document.getElementById("authButton");
-        const switchMode = document.getElementById("switchMode");
-        const authForm = document.getElementById("authForm");
-        const usernameInput = document.getElementById("username");
-        const passwordInput = document.getElementById("password");
+  <script>
+    // Get elements
+    const title = document.getElementById("title");
+    const description = document.getElementById("description");
+    const authButton = document.getElementById("authButton");
+    const switchMode = document.getElementById("switchMode");
+    const authForm = document.getElementById("authForm");
+    const signupFields = document.getElementById("signupFields");
+    const addressDropdown = document.getElementById("addressDropdown");
+    const detailedAddress = document.getElementById("detailedAddress");
+    const addressArrow = document.getElementById("addressArrow");
 
-        let isLoginMode = true;
+    // Sign-up specific input fields
+    const nameInput = document.getElementById("name");
+    const emailInput = document.getElementById("email");
+    const phoneInput = document.getElementById("phone");
+    const streetInput = document.getElementById("street");
+    const cityInput = document.getElementById("city");
+    const stateInput = document.getElementById("state");
+    const zipInput = document.getElementById("zip");
 
-        // Toggle between Login and Sign-Up modes
-        switchMode.addEventListener("click", () => {
-            isLoginMode = !isLoginMode;
-            if (isLoginMode) {
-                title.innerText = "Welcome to SmartPlate";
-                description.innerText = "Login to access your vehicle database";
-                authButton.innerText = "Login";
-                switchMode.innerText = "Don't have an account? Sign Up";
-            } else {
-                title.innerText = "Sign Up for SmartPlate";
-                description.innerText = "Create your account";
-                authButton.innerText = "Sign Up";
-                switchMode.innerText = "Already have an account? Login";
-            }
+    // Common input fields
+    const usernameInput = document.getElementById("username");
+    const passwordInput = document.getElementById("password");
+
+    let isLoginMode = true;
+    let addressExpanded = false;
+
+    // Toggle between Login and Sign-Up modes
+    switchMode.addEventListener("click", () => {
+      isLoginMode = !isLoginMode;
+      if (isLoginMode) {
+        title.innerText = "Welcome to SmartPlate";
+        description.innerText = "Login to access your vehicle database";
+        authButton.innerText = "Login";
+        switchMode.innerText = "Don't have an account? Sign Up";
+        signupFields.style.display = "none";
+      } else {
+        title.innerText = "Sign Up for SmartPlate";
+        description.innerText = "Create your account";
+        authButton.innerText = "Sign Up";
+        switchMode.innerText = "Already have an account? Login";
+        signupFields.style.display = "block";
+      }
+    });
+
+    // Toggle the detailed address dropdown
+    addressDropdown.addEventListener("click", () => {
+      addressExpanded = !addressExpanded;
+      if (addressExpanded) {
+        detailedAddress.style.display = "block";
+        addressDropdown.classList.add("expanded");
+      } else {
+        detailedAddress.style.display = "none";
+        addressDropdown.classList.remove("expanded");
+      }
+    });
+
+    // Handle form submission
+    authForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+
+      let requestBody = { username, password };
+      let endpoint = "/api/login";
+
+      if (!isLoginMode) {
+        const name = nameInput.value.trim();
+        const email = emailInput.value.trim();
+        const phone = phoneInput.value.trim();
+        let street = "";
+        let city = "";
+        let state = "";
+        let zip = "";
+
+        // If the detailed address section is expanded, gather its fields
+        if (addressExpanded) {
+          street = streetInput.value.trim();
+          city = cityInput.value.trim();
+          state = stateInput.value.trim();
+          zip = zipInput.value.trim();
+        }
+
+        // Check that the mandatory sign-up fields are filled.
+        if (!name || !email || !phone) {
+          alert("Please fill in your Full Name, Email, and Phone");
+          return;
+        }
+
+        requestBody = { name, email, phone, street, city, state, zip, username, password };
+        endpoint = "/api/signup";
+      }
+
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(requestBody),
         });
 
-        // Handle form submission
-        authForm.addEventListener("submit", async (e) => {
-            e.preventDefault();
+        const result = await response.json();
 
-            const username = usernameInput.value.trim();
-            const password = passwordInput.value.trim();
-
-            // Determine API endpoint based on mode
-            const endpoint = isLoginMode ? "/api/login" : "/api/signup";
-
-            try {
-                const response = await fetch(endpoint, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username, password }),
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    alert(result.message);
-                    if (isLoginMode) {
-                        // Redirect after successful login (optional)
-                        window.location.href = "/dashboard"; // Replace with your dashboard URL
-                    }
-                } else {
-                    alert(result.message);
-                }
-            } catch (error) {
-                console.error("Error:", error);
-                alert("An error occurred. Please try again.");
-            }
-        });
-    </script>
+        if (response.ok) {
+          alert(result.message);
+          if (isLoginMode || endpoint === "/api/signup") {
+            window.location.href = "/dashboard"; // Redirect after successful login/signup
+          }
+        } else {
+          alert(result.message);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        alert("An error occurred. Please try again.");
+      }
+    });
+  </script>
 </body>
 </html>
