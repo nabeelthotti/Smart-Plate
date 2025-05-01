@@ -23,40 +23,41 @@ auth_bp = Blueprint("auth_api", __name__)
 ### **1️⃣ User Signup (Register & Auto-Login)**
 @auth_bp.route("/signup", methods=["POST"])
 def signup():
-    data = request.get_json()
-    if not data:
-        return jsonify({"status": "fail", "message": "Invalid JSON payload"}), 400
-
-    name = data.get("name")
+    data = request.get_json() or {}
+    name     = data.get("name")
     username = data.get("username")
-    email = data.get("email")
-    phone = data.get("phone")
-    address = data.get("address")
-    password = data.get("password")
+    email    = data.get("email")
+    phone    = data.get("phone")
+    pwd      = data.get("password")
 
-    # Validate input
-    if not all([name, username, email, phone, address, password]):
-        return jsonify({"status": "fail", "message": "All fields are required"}), 400
+    # build address string from the parts (they may be empty)
+    street = data.get("street", "").strip()
+    city   = data.get("city",  "").strip()
+    state  = data.get("state", "").strip()
+    zipc   = data.get("zip",   "").strip()
+    address = ", ".join(f for f in (street, city, state, zipc) if f)
 
-    # Check if username already exists
+    # only require the truly mandatory fields
+    if not all([name, username, email, phone, pwd]):
+        return jsonify({"status": "fail", "message": "Name, username, email, phone and password are required"}), 400
+
+    # now address may be blank, but that’s OK
     if users_collection.find_one({"username": username}):
         return jsonify({"status": "fail", "message": "Username already exists"}), 400
 
-    # Insert new user into database
     users_collection.insert_one({
-        "name": name,
-        "username": username,
-        "email": email,
-        "phone": phone,
-        "address": address,
-        "password": password,  # 🔴 Consider hashing this for security
-        "created_at": datetime.utcnow(),
+        "name":       name,
+        "username":   username,
+        "email":      email,
+        "phone":      phone,
+        "address":    address,       # blank string if user didn’t expand
+        "password":   pwd,           # 🔴 still plain-text!
+        "created_at": datetime.utcnow()
     })
 
-    # Auto-login the user after signup
     session["username"] = username
+    return jsonify({"status":"success","message":"User created and logged in successfully"}), 201
 
-    return jsonify({"status": "success", "message": "User created and logged in successfully"}), 201
 
 ### **2️⃣ User Login (Store Session)**
 @auth_bp.route("/login", methods=["POST"])

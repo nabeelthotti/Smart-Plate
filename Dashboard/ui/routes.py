@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, session, redirect, url_for
 
-ui_bp = Blueprint("dashboard_ui", __name__, template_folder="../templates", static_folder="../static")
+dashboard_ui_bp = Blueprint("dashboard_ui", __name__, template_folder="templates")
 
-@ui_bp.route("/dashboard")
+@dashboard_ui_bp.route("/dashboard")
 def dashboard():
-    # Render the `dashboard.html` template
-    return render_template("dashboard.html")
+    if "username" not in session:
+        return redirect(url_for("dashboard_ui.dashboard"))
+    return render_template('dashboard.html')

@@ -1,0 +1,387 @@
+openapi: 3.0.3
+info:
+  title: Smart-Plate API
+  version: 1.0.0
+  description: |
+    AI-powered license-plate recognition REST API for vehicle entry/exit,
+    fines, report generation and user account management.
+servers:
+  - url: http://localhost:5000
+paths:
+
+  /dashboard-api/data:
+    get:
+      summary: Fetch dashboard stats & recent activity
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardData'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard-api/new-entry:
+    post:
+      summary: Upload photo, OCR → create new entry
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                hours:
+                  type: integer
+                  default: 0
+                paid_status:
+                  type: string
+                  enum: [PAID, UNPAID]
+      responses:
+        '200':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard-api/exit-entry/{entry_id}:
+    post:
+      summary: Mark an entry as exited
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: entry_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry updated to exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EntryResponse'
+        '400':
+          description: Not found or already exited
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /dashboard-api/add-fine/{entry_id}:
+    post:
+      summary: Add a fine amount to an entry
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: entry_id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fine:
+                  type: number
+                  format: float
+                  example: 15.50
+      responses:
+        '200':
+          description: Fine added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FineResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /dashboard-api/delete-entry/{entry_id}:
+    delete:
+      summary: Permanently delete an entry
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: entry_id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Entry deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /dashboard-api/report:
+    get:
+      summary: Download PDF report (random 3-digit suffix)
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: PDF attachment
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /account-api/user-profile:
+    get:
+      summary: Get current user profile
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /account-api/update-profile:
+    put:
+      summary: Update user profile fields
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /account-api/change-password:
+    put:
+      summary: Change password
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword,newPassword]
+              properties:
+                currentPassword:
+                  type: string
+                newPassword:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /logout:
+    get:
+      summary: Sign out (clear session)
+      responses:
+        '302':
+          description: Redirect to login
+
+components:
+
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+
+    Success:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+
+    Error:
+      type: object
+      properties:
+        status:
+          type: string
+          example: fail
+        message:
+          type: string
+          example: Not found
+
+    DashboardData:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        total_plates:
+          type: integer
+        entered_count:
+          type: integer
+        exited_count:
+          type: integer
+        recent_activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/Entry'
+
+    Entry:
+      type: object
+      properties:
+        id:
+          type: string
+        plate_number:
+          type: string
+        state:
+          type: string
+        entry_time:
+          type: string
+        exit_time:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [entered, exited]
+        hours:
+          type: integer
+        paid_status:
+          type: string
+          enum: [PAID, UNPAID]
+        fines:
+          type: number
+          format: float
+        image_url:
+          type: string
+
+    EntryResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        entry:
+          $ref: '#/components/schemas/Entry'
+
+    FineResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: success
+        entry:
+          type: object
+          properties:
+            id:
+              type: string
+            fines:
+              type: number
+              format: float
+
+    UserProfile:
+      type: object
+      properties:
+        name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          oneOf:
+            - type: string
+            - type: object
+              properties:
+                street: { type: string }
+                city:   { type: string }
+                state:  { type: string }
+                zip:    { type: string }
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        name:     { type: string }
+        username: { type: string }
+        email:    { type: string }
+        phone:    { type: string }
+        address:
+          type: object
+          properties:
+            street: { type: string }
+            city:   { type: string }
+            state:  { type: string }
+            zip:    { type: string }

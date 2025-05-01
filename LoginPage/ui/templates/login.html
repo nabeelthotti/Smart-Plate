@@ -1,5 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+  <!-- near top of login.html -->
+<script>
+  const isLogin = "{{ mode }}" === "login";
+  document.addEventListener("DOMContentLoaded", () => {
+    if (!isLogin) document.getElementById("switchMode").click();
+    const error = "{{ error or '' }}";
+  });
+</script>
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -243,7 +252,7 @@
 
         // Check that the mandatory sign-up fields are filled.
         if (!name || !email || !phone) {
-          alert("Please fill in your Full Name, Email, and Phone");
+
           return;
         }
 
@@ -261,16 +270,14 @@
         const result = await response.json();
 
         if (response.ok) {
-          alert(result.message);
           if (isLoginMode || endpoint === "/api/signup") {
             window.location.href = "/dashboard"; // Redirect after successful login/signup
           }
         } else {
-          alert(result.message);
+
         }
       } catch (error) {
         console.error("Error:", error);
-        alert("An error occurred. Please try again.");
       }
     });
   </script>

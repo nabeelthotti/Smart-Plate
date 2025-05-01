@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Scan Plate</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f0f0f0; }
+    .dropzone {
+      border: 2px dashed #888;
+      border-radius: 8px;
+      padding: 40px;
+      text-align: center;
+      background: white;
+      cursor: pointer;
+      transition: border-color 0.3s;
+    }
+    .dropzone.over { border-color: #007BFF; }
+    .hidden { display: none; }
+    #uploadBtn { margin-top: 10px; padding: 10px 20px; }
+    pre { background: #333; color: #eee; padding: 10px; border-radius: 4px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="dropzone" id="dropzone">Drag & drop an image here, or click to select</div>
+  <input type="file" id="fileInput" class="hidden" accept="image/*" />
+  <button id="uploadBtn">Upload</button>
+  <pre id="result"></pre>
+
+  <script>
+    const sidebar = document.getElementById('sidebar');
+    const menuButton = document.getElementById('menuButton');
+    const mainContent = document.getElementById('mainContent');
+
+    menuButton.addEventListener('click', () => {
+      sidebar.classList.toggle('extended');
+      mainContent.classList.toggle('shifted');
+    });
+
+    document.getElementById('addWidgets').addEventListener('click', () => {
+      alert('Widget adding functionality coming soon!');
+    });
+
+    // New Entry Modal Logic
+    const newEntryBtn = document.getElementById('newEntryBtn');
+    const modal = document.getElementById('newEntryModal');
+    const closeModal = document.querySelector('#newEntryModal .close');
+    const entryDropzone = document.getElementById('entryDropzone');
+    const entryFileInput = document.getElementById('entryFile');
+    const submitEntryBtn = document.getElementById('submitEntryBtn');
+    let entryFile = null;
+
+    newEntryBtn.addEventListener('click', () => {
+      modal.classList.remove('hidden');
+    });
+    closeModal.addEventListener('click', () => {
+      modal.classList.add('hidden');
+      entryFile = null;
+      entryDropzone.textContent = 'Drag & drop image or click to select';
+      document.getElementById('entryResult').textContent = '';
+    });
+
+    entryDropzone.addEventListener('click', () => entryFileInput.click());
+    entryDropzone.addEventListener('dragover', e => { e.preventDefault(); entryDropzone.classList.add('over'); });
+    entryDropzone.addEventListener('dragleave', e => { e.preventDefault(); entryDropzone.classList.remove('over'); });
+    entryDropzone.addEventListener('drop', e => {
+      e.preventDefault(); entryDropzone.classList.remove('over');
+      entryFile = e.dataTransfer.files[0];
+      entryDropzone.textContent = entryFile.name;
+    });
+    entryFileInput.addEventListener('change', () => {
+      entryFile = entryFileInput.files[0];
+      entryDropzone.textContent = entryFile.name;
+    });
+
+    submitEntryBtn.addEventListener('click', async () => {
+      if (!entryFile) return alert('No file selected');
+      const fd = new FormData();
+      fd.append('file', entryFile);
+      try {
+        // Call backend to scan and save
+        const response = await fetch('/dashboard-api/new-entry', { method: 'POST', body: fd });
+        const data = await response.json();
+        document.getElementById('entryResult').textContent = JSON.stringify(data, null, 2);
+        if (data.status === 'success') {
+          fetchDashboardData();
+        }
+      } catch (err) {
+        console.error(err);
+        alert('Failed to add entry');
+      }
+    });
+
+    async function fetchDashboardData() {
+      try {
+        const response = await fetch('/dashboard-api/data');
+        const data = await response.json();
+
+        document.getElementById('totalPlates').innerText = data.total_plates;
+        document.getElementById('activeVehicles').innerText = data.active_vehicles;
+        document.getElementById('exitedVehicles').innerText = data.exited_count;
+
+        const tableBody = document.getElementById('activityTable');
+        tableBody.innerHTML = '';
+        data.recent_activity.forEach(activity => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${activity.plate_number}</td>
+            <td>${activity.entry_time}</td>
+            <td>${activity.exit_time || 'N/A'}</td>
+            <td>${activity.status}</td>
+          `;
+          tableBody.appendChild(row);
+        });
+
+        const ctx = document.getElementById('vehicleChart').getContext('2d');
+        new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Entered', 'Exited'],
+            datasets: [{
+              label: 'Vehicles',
+              data: [data.entered_count, data.exited_count],
+            }]
+          },
+          options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+      } catch (error) {
+        console.error('Error fetching dashboard data:', error);
+      }
+    }
+
+    fetchDashboardData();
+  </script>
+  <!-- New Entry Modal -->
+  <div id="newEntryModal" class="modal hidden">
+    <div class="modal-content">
+      <span class="close">&times;</span>
+      <h2>New Plate Entry</h2>
+      <div class="dropzone" id="entryDropzone">Drag & drop image or click to select</div>
+      <input type="file" id="entryFile" class="hidden" accept="image/*" />
+      <button id="submitEntryBtn">Submit</button>
+      <pre id="entryResult"></pre>
+    </div>
+  </div>

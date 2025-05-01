@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPlate Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0; padding: 0;
+      background-color: #f4f5f7;
+    }
+    /* Sidebar */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      height: 100%; width: 250px;
+      background-color: #253858; color: white;
+      display: flex; flex-direction: column; align-items: flex-start;
+      padding: 20px 10px; box-sizing: border-box; z-index: 1000;
+    }
+    .sidebar .logo { margin-bottom: 30px; }
+    .sidebar .logo img { width: 70px; }
+    .sidebar .menu-item {
+      width:100%; padding:10px 15px; display:flex; align-items:center; gap:10px;
+      color:#dfe1e6; border-radius:5px; cursor:pointer; margin-bottom:10px;
+    }
+    .sidebar .menu-item.active,
+    .sidebar .menu-item:hover {
+      background-color:#344563;
+    }
+    .sidebar .menu-item i { width:20px; text-align:center; }
+    .sidebar .menu-item span { display:inline; }
+    .sidebar .add-widgets {
+      margin-top:auto; padding:10px 15px; background:#344563;
+      border-radius:5px; cursor:pointer; color:white;
+    }
+
+    /* Main content */
+    .main {
+      margin-left:250px; padding:20px; box-sizing:border-box;
+    }
+    header {
+      display:flex; justify-content:space-between; align-items:center;
+      margin-bottom:30px; position:relative;
+    }
+    header h1 { margin:0; color:#172b4d; font-size:24px; }
+    .top-buttons { display:flex; gap:15px; }
+    .top-buttons button {
+      background:#0052cc; color:white; border:none;
+      padding:10px 20px; border-radius:5px; cursor:pointer;
+      transition:background-color 0.3s;
+    }
+    .top-buttons button:hover { background:#003d99; }
+
+/* ── Stats Cards ───────────────────────────────────────────────────────── */
+.stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;        /* wrap on narrow screens */
+  max-width: 1200px;
+  margin: 0 auto 30px;
+}
+.stats .stat-card {
+  flex: 1 1 200px;        /* grow, shrink, min-width:200px */
+  background: white;      /* <-- this */
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 40px;
+  box-sizing: border-box;
+}
+
+
+/* ── Chart Container: let Chart.js handle sizing, drop the absolute trick ── */
+.chart-container {
+  background: white;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto 50px;
+  /* remove position:relative; height:350px; */
+}
+.chart-container h2 {
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+.chart-container canvas {
+  width: 100% !important;
+  height: 300px !important;
+}
+
+
+    /* Activity (CRM) */
+    .recent-activity {
+      background:white; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      max-width:1200px; margin:0 auto 30px;
+      padding:20px; border-radius:10px;
+    }
+    .recent-activity h2 {
+      margin-top:0; color:#172b4d;
+    }
+    .recent-activity table {
+      width:100%; border-collapse:collapse; margin-top:20px;
+    }
+    .recent-activity th,
+    .recent-activity td {
+      border:1px solid #ddd; padding:12px; text-align:left;
+    }
+    .recent-activity th {
+      background-color:#f4f5f7; color:#172b4d;
+    }
+    /* force the Action column wide enough */
+    .recent-activity th.action-col,
+    .recent-activity td.action-col {
+      min-width: 160px !important;
+    }
+
+    .view-img {
+      cursor:pointer; font-size:18px; margin-right:8px;
+    }
+    .edit-exit {
+      cursor:pointer; color:#0052cc; margin-left:5px;
+    }
+    .add-fine-btn {
+      background:#ffc107; color:#212529;
+      border:none; padding:4px 8px; border-radius:4px;
+      cursor:pointer;
+    }
+    .exit-btn {
+      background:#ff4d4f; color:white;
+      border:none; padding:4px 8px; border-radius:4px;
+      cursor:pointer;
+    }
+
+    /* Analytics chart */
+    .chart-container {
+      background:white; box-shadow:0 4px 10px rgba(0,0,0,0.1);
+      border-radius:10px; padding:20px;
+      max-width:1200px; margin:0 auto 50px;
+      position:relative; height:350px;
+    }
+    .chart-container h2 {
+      margin-top:0; color:#172b4d;
+    }
+    #vehicleChart {
+      right:20px; bottom:20px;
+    }
+
+    /* Modals (image preview + fine form) */
+    .modal-overlay {
+      display:none; position:fixed; top:0; left:0;
+      width:100%; height:100%;
+      background:rgba(0,0,0,0.6);
+      justify-content:center; align-items:center;
+      z-index:3000;
+    }
+    .modal-content {
+      background:white; padding:20px; border-radius:8px;
+      max-width:90%; max-height:90%; overflow:auto;
+      position:relative;
+    }
+    .modal-close {
+      position:absolute; top:10px; right:10px;
+      cursor:pointer; font-size:38px;
+    }
+    /* Fine form */
+    #fineForm label { display:block; margin-top:10px; }
+    #fineForm input { width:100%; padding:8px; margin-top:4px; }
+
+    /* ── New Entry Button ───────────────────────────────────────────────────────── */
+#newEntryBtn {
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: background-color 0.2s, transform 0.1s;
+}
+#newEntryBtn:hover {
+  background-color: #218838;
+  transform: translateY(-1px);
+}
+
+/* ── Entry Form Overlay ─────────────────────────────────────────────────────── */
+#entryFormOverlay {
+  display: none;               /* hidden by default */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  justify-content: center;     /* center children horizontally */
+  align-items: center;         /* center children vertically */
+  z-index: 2000;
+}
+
+
+/* ── Entry Form Container ──────────────────────────────────────────────────── */
+#entryForm {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  text-align: center;
+}
+
+/* Heading inside modal */
+#entryForm h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #172b4d;
+  font-size: 22px;
+}
+
+/* File input */
+#entryForm input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+/* Labels */
+#entryForm label {
+  display: block;
+  text-align: left;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #172b4d;
+}
+
+/* Select boxes */
+#entryForm select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/* Submit + Cancel buttons */
+#entryForm button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+#submitEntryBtn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+#submitEntryBtn:hover {
+  background-color: #0069d9;
+  transform: translateY(-1px);
+}
+
+#cancelEntryBtn {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  margin-left: 10px;
+}
+#cancelEntryBtn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+/* ── Fine Form Modal Styling ───────────────────────────────────────────────── */
+#fineForm {
+  background: white;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#fineForm h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #172b4d;
+  font-size: 22px;
+}
+
+#fineForm label {
+  display: block;
+  text-align: left;
+  margin-top: 15px;
+  font-weight: bold;
+  color: #172b4d;
+}
+
+#fineForm input[type="text"],
+#fineForm input[type="number"] {
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+#fineForm button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+#submitFineBtn {
+  background-color: #007bff;
+  color: white;
+}
+#submitFineBtn:hover {
+  background-color: #0069d9;
+  transform: translateY(-1px);
+}
+
+#cancelFineBtn {
+  background-color: #dc3545;
+  color: white;
+  margin-left: 10px;
+}
+#cancelFineBtn:hover {
+  background-color: #c82333;
+  transform: translateY(-1px);
+}
+
+
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="logo">
+      <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+    </div>
+    <div class="menu-item active" onclick="location.href='/dashboard'">
+      <i class="fas fa-tachometer-alt"></i><span>Dashboard</span>
+    </div>
+    <div class="menu-item" onclick="location.href='/account'">
+      <i class="fas fa-user"></i><span>Account</span>
+    </div>
+    <div class="menu-item" style="margin-top:auto;" onclick="window.location.href='/logout'">
+      <i class="fas fa-sign-out-alt"></i>
+      <span>Sign Out</span>
+    </div>
+  </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <header>
+      <h1>Dashboard</h1>
+      <div class="top-buttons">
+        <button id="newEntryBtn">New Entry</button>
+        <button id="generateReportBtn">Generate Report</button>
+        <button onclick="alert('Help coming soon!')">Help</button>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats">
+      <div class="stat-card">
+        <h2 id="totalPlates">0</h2><p>Total Plates</p>
+      </div>
+      <div class="stat-card">
+        <h2 id="activeVehicles">0</h2><p>Active Vehicles</p>
+      </div>
+      <div class="stat-card">
+        <h2 id="exitedVehicles">0</h2><p>Exited Vehicles</p>
+      </div>
+    </div>
+
+    <!-- Activity Table (CRM) -->
+    <div class="recent-activity">
+      <h2>Activity</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Plate</th>
+            <th>State</th>
+            <th>Entry</th>
+            <th>Exit</th>
+            <th>Status</th>
+            <th>Hours</th>
+            <th>Paid</th>
+            <th>Fine</th>
+            <th class="action-col">Action</th>
+          </tr>
+        </thead>
+        
+        
+        <tbody id="activityTable"></tbody>
+      </table>
+    </div>
+
+    <!-- Analytics -->
+    <div class="chart-container">
+      <h2>Vehicle Entry/Exit Analytics</h2>
+      <canvas id="vehicleChart"></canvas>
+    </div>
+  </div>
+
+  <!-- New Entry Modal -->
+  <div id="entryFormOverlay" class="modal-overlay">
+    <div id="entryForm" class="modal-content">
+      <span class="modal-close"
+            onclick="closeModal('entryFormOverlay')">&times;</span>
+      <h2>New Vehicle Entry</h2>
+      <input type="file" id="fileInput" accept="image/*"><br>
+      <label for="hoursSelect">Hours:</label>
+      <select id="hoursSelect">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <!-- … etc … -->
+        <option value="24">24</option>
+      </select>
+      
+      <label for="paidSelect">Paid Status:</label>
+      <select id="paidSelect">
+        <option>PAID</option><option>UNPAID</option>
+      </select><br>
+      <button id="submitEntryBtn">Submit</button>
+      <button id="cancelEntryBtn">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Image Preview Modal -->
+  <div id="imageModal" class="modal-overlay">
+    <div class="modal-content">
+      <span class="modal-close"
+            onclick="closeModal('imageModal')">&times;</span>
+      <img id="modalImg" src="" alt="Preview" style="max-width:100%; max-height:80vh">
+    </div>
+  </div>
+
+  <!-- Add Fine Modal -->
+  <div id="fineFormOverlay" class="modal-overlay">
+    <div id="fineForm" class="modal-content">
+      <span class="modal-close"
+            onclick="closeModal('fineFormOverlay')">&times;</span>
+      <h2>Add Fine</h2>
+      <label for="fineReason">Reason</label>
+      <input type="text" id="fineReason">
+      <label for="fineAmount">Amount</label>
+      <input type="number" id="fineAmount">
+      <button id="submitFineBtn">Submit Fine</button>
+    </div>
+  </div>
+
+  <script>
+    let vehicleChart;
+    // open / close any modal by ID
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+  
+    // fetch & render dashboard data
+    async function fetchDashboardData() {
+      const res = await fetch('/dashboard-api/data');
+      const d   = await res.json();
+      if (d.status !== 'success') {
+        console.error(d.message);
+        return;
+      }
+  
+      // Stats
+      document.getElementById('totalPlates').innerText    = d.total_plates;
+      document.getElementById('activeVehicles').innerText = d.entered_count;
+      document.getElementById('exitedVehicles').innerText = d.exited_count;
+  
+      // Activity table
+      const tbody = document.getElementById('activityTable');
+      tbody.innerHTML = '';
+  
+      d.recent_activity.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><span class="view-img" data-url="${a.image_url}">📷</span></td>
+          <td>${a.plate_number}</td>
+          <td>${a.state}</td>
+          <td>${a.entry_time}</td>
+          <td>
+            ${a.exit_time || 'Still Parked'}
+            ${a.status === 'entered'
+              ? `<i class="fas fa-pencil-alt edit-exit" data-id="${a.id}"></i>`
+              : ''}
+          </td>
+          <td>${a.status}</td>
+          <td>${a.hours}</td>
+          <td style="color:${a.paid_status === 'PAID' ? 'green' : 'red'}">
+            ${a.paid_status}
+          </td>
+          <td>
+            ${typeof a.fines === 'number'
+              ? '$' + a.fines.toFixed(2)
+              : '$0.00'}
+          </td>
+          <td class="action-col">
+          ${a.status==='entered'
+            ? `<button class="exit-btn" data-id="${a.id}">Mark Exited</button>` : ''}
+          <button class="add-fine-btn" data-id="${a.id}">Add Fine</button>
+          <i class="fas fa-trash delete-btn" data-id="${a.id}"></i>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+  
+      // Image preview
+      document.querySelectorAll('.view-img').forEach(el => {
+        el.onclick = () => {
+          document.getElementById('modalImg').src = el.dataset.url;
+          openModal('imageModal');
+        };
+      });
+  
+      // Edit exit time
+      document.querySelectorAll('.edit-exit').forEach(btn => {
+        btn.onclick = async () => {
+          const nt = prompt('New exit time (YYYY/MM/DD_HH:MM:SS):');
+          if (!nt) return;
+          const r = await fetch(`/dashboard-api/edit-exit/${btn.dataset.id}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ exit_time: nt })
+          });
+          const j = await r.json();
+          if (j.status === 'success') fetchDashboardData();
+          else alert(j.message);
+        };
+      });
+  
+      // Mark exited
+      document.querySelectorAll('.exit-btn').forEach(btn => {
+        btn.onclick = async () => {
+          await fetch(`/dashboard-api/exit-entry/${btn.dataset.id}`, { method: 'POST' });
+          fetchDashboardData();
+        };
+      });
+  
+      // Add fine modal
+      document.querySelectorAll('.add-fine-btn').forEach(btn => {
+        btn.onclick = () => {
+          window.currentFineId = btn.dataset.id;
+          openModal('fineFormOverlay');
+        };
+      });
+  
+// Delete entry (no confirm, straight trash can)
+document.querySelectorAll('.delete-btn').forEach(btn => {
+  btn.onclick = async () => {
+    const res = await fetch(
+      `/dashboard-api/delete-entry/${btn.dataset.id}`,
+      { method: 'DELETE' }
+    );
+    const json = await res.json();
+    if (json.status === 'success') {
+      fetchDashboardData();
+    } else {
+      alert(json.message);
+    }
+  };
+});
+
+      // Render chart
+      // Render or update chart
+      const counts = [ d.entered_count, d.exited_count ];
+      if (vehicleChart) {
+        // update existing chart
+        vehicleChart.data.datasets[0].data = counts;
+        vehicleChart.update();
+      } else {
+        // first time: create it
+        const ctx = document.getElementById('vehicleChart').getContext('2d');
+        vehicleChart = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: ['Still Parked', 'Exited'],
+            datasets: [{
+              label: 'Vehicles',
+              data: counts,
+              backgroundColor: [
+            '#36a2eb',  
+            'red'   
+            ]
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { grid: { display: false } },
+              y: { beginAtZero: true }
+            }
+          }
+        });
+      }
+    }
+  
+    // wire up entry & fine modals
+    document.getElementById('newEntryBtn').onclick = () => openModal('entryFormOverlay');
+    document.getElementById('cancelEntryBtn').onclick = () => closeModal('entryFormOverlay');
+    document.getElementById('submitEntryBtn').onclick = async () => {
+      const file = document.getElementById('fileInput').files[0];
+      if (!file) return alert('Please select an image.');
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('hours', document.getElementById('hoursSelect').value);
+      fd.append('paid_status', document.getElementById('paidSelect').value);
+  
+      const r = await fetch('/dashboard-api/new-entry', { method: 'POST', body: fd });
+      const j = await r.json();
+      if (j.status === 'success') {
+        closeModal('entryFormOverlay');
+        fetchDashboardData();
+      } else {
+        alert(j.message);
+      }
+    };
+  
+    document.getElementById('submitFineBtn').onclick = async () => {
+      const reason = document.getElementById('fineReason').value.trim();
+      const amount = document.getElementById('fineAmount').value.trim();
+      if (!reason || !amount) return alert('Reason & amount required.');
+      const r = await fetch(`/dashboard-api/add-fine/${window.currentFineId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason, fine: amount })
+      });
+      const j = await r.json();
+      if (j.status === 'success') {
+        closeModal('fineFormOverlay');
+        fetchDashboardData();
+      } else {
+        alert(j.message);
+      }
+    };
+  
+    // PDF report button
+    document.getElementById('generateReportBtn').onclick = async () => {
+      const r = await fetch('/dashboard-api/report');
+      if (!r.ok) {
+        const e = await r.json();
+        return alert(e.message || 'Report failed');
+      }
+      const blob = await r.blob();
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href     = url;
+      a.download = 'SmartPlateReport.pdf';
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+  
+    // Close all modals on ESC
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        ['entryFormOverlay','imageModal','fineFormOverlay']
+          .forEach(id => closeModal(id));
+      }
+    });
+  
+    // initial load
+    fetchDashboardData();
+  </script>
+  
+</body>
+</html>

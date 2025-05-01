@@ -1,47 +1,79 @@
+# 🚗 Smart-Plate: AI-Powered License Plate Recognition
 
-# 🚗 **Smart-Plate**: Revolutionizing Recognition 🚦
-
-Welcome to **Smart-Plate**, an advanced AI-powered license plate recognition system. Designed for real-time vehicle tracking, Smart-Plate accurately captures and processes license plate data to streamline applications such as automated toll collection, traffic monitoring, and enhanced security.
-
----
-
-## 🧠 **Key Features**
-- **Real-Time Recognition**: Accurately identifies license plates on the go.
-- **Analytics Dashboard**: A visually appealing dashboard to monitor vehicle activity.
-- **Data-Driven Insights**: Provides actionable insights with detailed analytics.
-- **Secure Storage**: MongoDB-backed database for efficient and secure data handling.
-- **Scalable Design**: Built with Flask and modern web technologies for scalability.
+Smart-Plate is an AI-powered, real-time license plate recognition system with a fully featured web dashboard.  
+It captures vehicle entry/exit, allows fines and deletions, generates PDF reports with unique filenames, and includes user account management.
 
 ---
 
-## 📊 **Applications**
-1. **Automated Toll Collection**: Enhance road toll efficiency with real-time vehicle data.
-2. **Traffic Monitoring**: Gain insights into traffic patterns and vehicle movement.
-3. **Security Systems**: Track and identify unauthorized vehicles in restricted areas.
-4. **Parking Management**: Simplify parking systems by automating vehicle entry/exit logs.
+## 🧠 Key Features
+
+- **Real-Time Plate OCR**  
+  Uses OpenAI Vision to extract plate numbers & state from uploaded images.
+- **Interactive Dashboard**  
+  • Vehicle entry/exit logs  
+  • “Fine” column & add-fine modal  
+  • Delete (🗑️) entries on the spot  
+  • Analytics charts (parked vs exited)
+- **PDF Reporting**  
+  Download a **SmartPlateReportXXX.pdf** (random 3-digit suffix) with full activity.
+- **User Accounts**  
+  Login/signup flow, profile edit, change password & **Sign Out** button in the sidebar.
+- **Secure Data Storage**  
+  MongoDB for entries & user profiles.
+- **Scalable Flask API**  
+  REST endpoints for all operations.
 
 ---
 
-## 🛠 **Technology Stack**
-| Component             | Technology                    |
-|-----------------------|-------------------------------|
-| **Backend**           | Flask, Python                 |
-| **Frontend**          | HTML5, CSS3, JavaScript       |
-| **Database**          | MongoDB                       |
-| **UI Framework**      | Chart.js                      |
-| **Env. Management**   | dotenv                        |
+## 📊 Applications
+
+1. **Parking Management**: Automate entry/exit & fines.  
+2. **Security**: Audit vehicle movements, flag unpaid or fined vehicles.  
+3. **Traffic Analytics**: Dashboard charts for usage patterns.
+
+---
+
+## 🔗 API Endpoints
+
+| Route                            | Method | Description                                |
+|----------------------------------|:------:|--------------------------------------------|
+| `/dashboard-api/data`            |  GET   | Fetch stats & recent activity.             |
+| `/dashboard-api/new-entry`       |  POST  | Upload image → OCR → create entry.         |
+| `/dashboard-api/exit-entry/<id>` |  POST  | Mark an entry as exited (sets `exit_time`).|
+| `/dashboard-api/add-fine/<id>`   |  POST  | Add a fine amount to an entry.             |
+| `/dashboard-api/delete-entry/<id>`| DELETE| Permanently remove an entry.               |
+| `/dashboard-api/report`          |  GET   | Download PDF report (randomized name).     |
+| `/account-api/user-profile`      |  GET   | Get current user’s profile.                |
+| `/account-api/update-profile`    |  PUT   | Update name/email/phone/address.           |
+| `/account-api/change-password`   |  PUT   | Change the logged-in user’s password.      |
+| `/logout`                        |  GET   | Sign out and clear session.                |
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer       | Tech                          |
+|-------------|-------------------------------|
+| **Backend** | Python, Flask                 |
+| **DB**      | MongoDB                       |
+| **Auth**    | Flask-Session (cookie based)  |
+| **OCR**     | OpenAI Vision (gpt-4o)        |
+| **Frontend**| HTML, CSS, JS, Chart.js       |
+| **Env**     | python-dotenv                 |
 
 ---
 
 ## 📐 **System Architecture**
-1. **License Plate Recognition**:
-   - Real-time capture and analysis of license plate data.
-2. **MongoDB Database**:
-   - Securely stores license plate data including entry/exit times.
-3. **Dashboard Interface**:
-   - Provides interactive analytics and vehicle activity logs.
-4. **API Endpoints**:
-   - Efficient API for data management and retrieval.
+1. **Upload**: User uploads plate photo.  
+2. **OCR**: Flask calls `process_license_plate()` → gpt-4o extracts plate & state.  
+3. **Store**: Entry inserted into Mongo with `fines=0`, `status='entered'`.  
+4. **Dashboard**:  
+   - Shows stats, logs, fines & delete buttons.  
+   - Charts auto-refresh via `/dashboard-api/data`.  
+5. **Reporting**:  
+   - `/dashboard-api/report` streams a PDF named `SmartPlateReport###.pdf`.
+
+---
 
 ---
 
